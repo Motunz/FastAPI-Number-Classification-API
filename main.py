@@ -1,58 +1,54 @@
-from fastapi import FastAPI, Query
-import requests
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import JSONResponse
+from typing import Dict
 
 app = FastAPI()
 
-def is_prime(n: int) -> bool:
-    if n < 2:
-        return False
-    for i in range(2, int(n ** 0.5) + 1):
-        if n % i == 0:
-            return False
-    return True
+# Predefined fun facts
+fun_facts: Dict[int, str] = {
+    371: "371 is an Armstrong number because 3^3 + 7^3 + 1^3 = 371",
+    28: "28 is a perfect number because the sum of its proper divisors equals 28.",
+    7: "7 is a prime number and is considered lucky in many cultures.",
+    42: "42 is known as the 'Answer to the Ultimate Question of Life, the Universe, and Everything' in Hitchhiker's Guide to the Galaxy."
+}
 
-def is_perfect(n: int) -> bool:
-    return sum(i for i in range(1, n) if n % i == 0) == n
-
-def is_armstrong(n: int) -> bool:
-    digits = [int(d) for d in str(n)]
-    power = len(digits)
-    return sum(d ** power for d in digits) == n
-
-@app.get("/")
+@app.get("/", response_class=JSONResponse)
 def home():
-    return {"message": "Welcome to the FastAPI Number Classification API!"}
+    return {"message": "Welcome to the FastAPI Number Classification API"}
 
-@app.get("/api/classify-number")
-async def classify_number(number: int = Query(..., description="Number to classify")):
+@app.get("/api/classify-number", response_class=JSONResponse)
+def classify_number(number: str = Query(..., description="Number to classify")):
+    # Validate input
     try:
-        num = int(number)
-        properties = []
-        if num % 2 == 0:
-            properties.append("even")
-        else:
-            properties.append("odd")
-        if is_armstrong(num):
-            properties.append("armstrong")
-        if is_prime(num):
-            properties.append("prime")
-        if is_perfect(num):
-            properties.append("perfect")
-
-        digit_sum = sum(int(d) for d in str(num))
-
-       
-        fun_fact_response = requests.get(f"http://numbersapi.com/{num}")
-        fun_fact = fun_fact_response.text if fun_fact_response.status_code == 200 else "No fun fact found."
-
-        return {
-            "number": num,
-            "is prime": is_prime(num),
-            "is perfect": is_perfect(num),
-            "properties": properties,
-            "digit_sum": digit_sum,
-            "fun fact": fun_fact
-        }
-
+        number_float = float(number)  # Convert input to float
     except ValueError:
-        return {"number": str(number), "error": True}
+        raise HTTPException(status_code=400, detail="Invalid input. Please provide a number.")
+
+    number_int = int(number_float)  # Convert to integer for calculations
+    
+    # Determine number properties
+    is_prime = number_int > 1 and all(number_int % i != 0 for i in range(2, int(number_int ** 0.5) + 1))
+    is_perfect = sum(i for i in range(1, number_int) if number_int % i == 0) == number_int
+    is_armstrong = sum(int(digit) ** len(str(number_int)) for digit in str(abs(number_int))) == number_int
+    digit_sum = sum(int(digit) for digit in str(abs(number_int)))
+
+    # Determine number categories
+    properties = []
+    if number_int % 2 == 0:
+        properties.append("even")
+    else:
+        properties.append("odd")
+    if is_armstrong:
+        properties.append("armstrong")
+
+    # Get predefined fun fact or return a default message
+    fun_fact = fun_facts.get(number_int, "No predefined fun fact available.")
+
+    return {
+        "number": number_float,  
+        "is prime": is_prime,
+        "is perfect": is_perfect,
+        "properties": properties,
+        "digit_sum": digit_sum,
+        "fun fact": fun_fact
+    }
