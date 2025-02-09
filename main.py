@@ -18,13 +18,15 @@ def home():
 
 @app.get("/api/classify-number", response_class=JSONResponse)
 def classify_number(number: str = Query(..., description="Number to classify")):
+    if number is None:
+        raise HTTPException(status_code=400, detail="Please provide a number. Example: /api/classify-number?number=371")
     # Validate input
     try:
-        number_float = float(number)  # Convert input to float
+        number_float = float(number) 
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid input. Please provide a number.")
 
-    number_int = int(number_float)  # Convert to integer for calculations
+    number_int = int(number_float)  
     
     # Determine number properties
     is_prime = number_int > 1 and all(number_int % i != 0 for i in range(2, int(number_int ** 0.5) + 1))
