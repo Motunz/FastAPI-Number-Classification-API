@@ -17,9 +17,9 @@ def home():
     return {"message": "Welcome to the FastAPI Number Classification API"}
 
 @app.get("/api/classify-number", response_class=JSONResponse)
-def classify_number(number: str = Query(..., description="Number to classify")):
+def classify_number(number: str = Query(None, description="Number to classify")):
     if number is None:
-        raise HTTPException(status_code=400, detail="Please provide a number. Example: /api/classify-number?number=371")
+        raise HTTPException(status_code=400, detail="Missing required query parameter: 'number' . Example: /api/classify-number?number=371")
     # Validate input
     try:
         number_float = float(number) 
