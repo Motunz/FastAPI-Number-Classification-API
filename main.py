@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import JSONResponse
-from typing import Dict
+from typing import Dict, Union
 
 app = FastAPI()
 
@@ -17,17 +17,17 @@ def home():
     return {"message": "Welcome to the FastAPI Number Classification API"}
 
 @app.get("/api/classify-number", response_class=JSONResponse)
-def classify_number(number: str = Query(None, description="Number to classify")):
-    if number is None:
-        raise HTTPException(status_code=400, detail="Missing required query parameter: 'number' . Example: /api/classify-number?number=371")
+def classify_number(number: Union[int, float, str] = Query(..., description="Number to classify")):
     # Validate input
     try:
-        number_float = float(number) 
+        number_float = float(number)  # Allow float input
+        number_int = int(number_float)  # Convert to integer for classification
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid input. Please provide a number.")
+        return JSONResponse(
+            status_code=400,
+            content={"number": number, "error": True, "message": "Invalid input. Please provide a valid number."}
+        )
 
-    number_int = int(number_float)  
-    
     # Determine number properties
     is_prime = number_int > 1 and all(number_int % i != 0 for i in range(2, int(number_int ** 0.5) + 1))
     is_perfect = sum(i for i in range(1, number_int) if number_int % i == 0) == number_int
@@ -35,22 +35,21 @@ def classify_number(number: str = Query(None, description="Number to classify"))
     digit_sum = sum(int(digit) for digit in str(abs(number_int)))
 
     # Determine number categories
-    properties = []
-    if number_int % 2 == 0:
-        properties.append("even")
-    else:
-        properties.append("odd")
+    properties = ["even" if number_int % 2 == 0 else "odd"]
     if is_armstrong:
         properties.append("armstrong")
 
     # Get predefined fun fact or return a default message
     fun_fact = fun_facts.get(number_int, "No predefined fun fact available.")
 
-    return {
-        "number": number_float,  
-        "is prime": is_prime,
-        "is perfect": is_perfect,
-        "properties": properties,
-        "digit_sum": digit_sum,
-        "fun fact": fun_fact
-    }
+    return JSONResponse(
+        status_code=200,
+        content={
+            "number": number_float,  
+            "is prime": is_prime,
+            "is perfect": is_perfect,
+            "properties": properties,
+            "digit_sum": digit_sum,
+            "fun fact": fun_fact
+        }
+    )
