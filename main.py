@@ -12,7 +12,7 @@ def is_prime(n):
     return True
 
 def is_perfect(n):
-    if n == 0:  # Fix: 0 should not be classified as a perfect number
+    if n == 0:  
         return False
     return sum(i for i in range(1, n) if n % i == 0) == n
 
@@ -35,10 +35,11 @@ def home():
     return {"message": "Welcome to the Number Classification API!"}
 
 @app.get("/api/classify-number")
-def classify_number(number: int):
-    # Fix: Handle invalid input with a 400 error
-    if number < 0:
-        raise HTTPException(status_code=400, detail="Number must be a non-negative integer.")
+def classify_number(number: float):
+    try:
+        number = int(number)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid input. Must be a number.")
 
     properties = []
     if is_armstrong(number):
