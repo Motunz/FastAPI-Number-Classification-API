@@ -76,9 +76,15 @@ Endpoint: ```GET /api/classify-number?number=<number>```
 
 4. Set Build Command: ```pip install -r requirements.txt```
 
-5. Start command
+5. Start command: ```uvicorn main:app --host 0.0.0.0 --port 10000```
 
-6. Deploy
+6. Runtime Environment: Python
+
+7. Click "Create Web Service" and wait for deployment.
+
+## Test your API on browser or postman
+```https://fastapi-number-classifier.onrender.com/api/classify-number?number=371``
+
 
 
 
